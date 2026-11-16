@@ -1,19 +1,17 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\LaporanHarianController;
-use App\Http\Controllers\VerifikasiController;
-use App\Http\Controllers\PenilaianKinerjaController;
+use Illuminate\Support\Facades\Route;
 
-// Langsung buka Dashboard Utama BAWASLU-SIGAP (Tanpa Login)
-Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+// Hanya untuk yang belum login
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
+});
 
-// Endpoint Simpan Laporan & Foto Bukti
-Route::post('/api/laporan/store', [LaporanHarianController::class, 'store'])->name('laporan.store');
-
-// Endpoint Verifikasi Laporan
-Route::post('/api/verifikasi/{id}', [VerifikasiController::class, 'updateStatus'])->name('verifikasi.update');
-
-// Endpoint Simpan Evaluasi Kinerja
-Route::post('/api/penilaian/store', [PenilaianKinerjaController::class, 'store'])->name('penilaian.store');
+// Hanya untuk yang sudah login
+Route::middleware('auth')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
