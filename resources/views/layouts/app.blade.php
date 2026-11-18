@@ -136,7 +136,7 @@
             <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'aktif' : '' }}">Dashboard</a>
 
             @if ($isAdmin)
-                <a href="#">Semua Laporan</a>
+                <a href="{{ route('admin.laporan.index') }}">Semua Laporan</a>
                 <a href="#">Data Tenaga Pendukung</a>
                 <a href="#">Verifikasi Laporan</a>
                 <a href="#">Evaluasi</a>
