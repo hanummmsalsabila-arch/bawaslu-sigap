@@ -2,29 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Laporan;
+use App\Models\Tugas;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $user    = $request->user();
-        $isAdmin = $user->role === 'admin'; // sesuaikan dengan kolom/nilai di tabel users
+        $user = auth()->user();
 
-        // TODO: ganti data contoh di bawah dengan query ke tabel laporan
-        $ringkasan = [
-            'masuk'    => 24,
-            'menunggu' => 9,
-            'revisi'   => 3,
-        ];
+        if ($user->isAdmin()) {
+            return view('dashboard.admin', [
+                'stats' => [
+                    ['angka' => Laporan::whereDate('dikirim_at', today())->count(), 'label' => 'Laporan masuk hari ini', 'merah' => false],
+                    ['angka' => Laporan::where('status', 'menunggu')->count(),      'label' => 'Menunggu verifikasi',    'merah' => true],
+                    ['angka' => Laporan::where('status', 'revisi')->count(),        'label' => 'Perlu revisi',           'merah' => false],
+                ],
+                'laporan' => Laporan::with(['user', 'tugas'])
+                    ->whereNotNull('dikirim_at')
+                    ->latest('dikirim_at')
+                    ->limit(8)
+                    ->get(),
+            ]);
+        }
 
-        $laporanTerbaru = [
-            ['nama' => 'Rina Wulandari', 'kegiatan' => 'Rekap data pengawasan TPS',   'tanggal' => '16 Nov 2026', 'status' => 'Menunggu'],
-            ['nama' => 'Dimas Prakoso',  'kegiatan' => 'Penginputan berkas sengketa', 'tanggal' => '16 Nov 2026', 'status' => 'Disetujui'],
-            ['nama' => 'Siti Aminah',    'kegiatan' => 'Dokumentasi sosialisasi',     'tanggal' => '15 Nov 2026', 'status' => 'Revisi'],
-            ['nama' => 'Yoga Pratama',   'kegiatan' => 'Arsip surat masuk',           'tanggal' => '15 Nov 2026', 'status' => 'Disetujui'],
-        ];
+        $hitung = fn (string $status) => Laporan::where('user_id', $user->id)->where('status', $status)->count();
 
-        return view('dashboard', compact('user', 'isAdmin', 'ringkasan', 'laporanTerbaru'));
+        $tersedia = Tugas::untuk($user)
+            ->whereDoesntHave('laporan', fn ($q) => $q->where('user_id', $user->id))
+            ->count();
+
+        return view('dashboard.user', [
+            'stats' => [
+                ['angka' => $tersedia,            'label' => 'Tugas tersedia',      'merah' => false],
+                ['angka' => $hitung('menunggu'),  'label' => 'Menunggu verifikasi', 'merah' => false],
+                ['angka' => $hitung('revisi'),    'label' => 'Perlu revisi',        'merah' => true],
+            ],
+            'perluRevisi' => $hitung('revisi'),
+            'laporan' => Laporan::with('tugas')
+                ->where('user_id', $user->id)
+                ->latest('updated_at')
+                ->limit(5)
+                ->get(),
+        ]);
     }
 }

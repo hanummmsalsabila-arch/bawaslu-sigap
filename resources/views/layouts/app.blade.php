@@ -1,4 +1,3 @@
-@php($isAdmin = $isAdmin ?? (auth()->user()?->role === 'admin'))
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -6,163 +5,189 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Dashboard') - SIGAP Bawaslu</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ink: #1E2530;
-            --paper: #F4F5F7;
-            --surface: #FFFFFF;
-            --line: #DDE1E7;
-            --muted: #5B6574;
-            --red: #B3202A;
-            --red-dark: #8E1821;
-            --ok: #1F7A4D;
-            --ok-bg: #E4F3EB;
-            --warn: #8A5200;
-            --warn-bg: #FBEFD9;
-            --bad: #B3202A;
-            --bad-bg: #FBE4E5;
+            --dark: #1f2430; --dark-hover: #2b3140; --light: #f3f5f8;
+            --text: #1f2430; --muted: #667085; --border: #e5e8ee; --red: #b01f2a;
         }
         * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-            background: var(--paper);
-            color: var(--ink);
-            line-height: 1.5;
-        }
-        a { color: inherit; text-decoration: none; }
-        :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+        body { margin: 0; font-family: "IBM Plex Sans", system-ui, sans-serif; background: var(--light); color: var(--text); }
 
-        .shell { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
-
-        /* Sidebar */
         .sidebar {
-            background: var(--ink);
-            color: #E8EBF0;
-            padding: 28px 18px;
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
+            position: fixed; top: 0; left: 0; bottom: 0; width: 260px;
+            background: var(--dark); color: #e8ebf2; padding: 32px 22px;
+            display: flex; flex-direction: column; z-index: 20; overflow-y: auto;
         }
-        .logo { font-size: 26px; font-weight: 600; letter-spacing: .04em; padding: 0 10px; }
-        .logo-sub { font-size: 13px; color: #A9B1BE; padding: 0 10px; margin-top: 2px; }
-        .menu { margin-top: 32px; display: flex; flex-direction: column; gap: 2px; }
-        .menu a {
-            padding: 10px 12px;
-            border-radius: 6px;
-            font-size: 15px;
-            color: #C9CFD9;
-            border-left: 3px solid transparent;
+        .sidebar h1 { margin: 0; font-size: 28px; letter-spacing: 1.5px; }
+        .sidebar .tag { margin: 4px 0 28px; color: #aab2c3; font-size: 13px; }
+        .sidebar nav { flex: 1; }
+        .sidebar nav a {
+            display: block; padding: 12px 16px; margin-bottom: 4px;
+            color: #dfe3ec; text-decoration: none; border-radius: 6px;
+            border-left: 3px solid transparent; font-size: 15px;
         }
-        .menu a:hover { background: rgba(255,255,255,.06); color: #fff; }
-        .menu a.aktif { background: rgba(255,255,255,.08); color: #fff; border-left-color: var(--red); }
-        .menu .pemisah { height: 1px; background: rgba(255,255,255,.1); margin: 10px 0; }
-
-        .akun { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid rgba(255,255,255,.1); }
-        .akun-nama { font-weight: 500; }
-        .akun-peran { font-size: 13px; color: #A9B1BE; }
-        .akun form { margin-top: 12px; }
-        .btn-keluar {
-            width: 100%;
-            padding: 9px 12px;
-            background: transparent;
-            color: #E8EBF0;
-            border: 1px solid rgba(255,255,255,.25);
-            border-radius: 6px;
-            font: inherit;
-            font-size: 14px;
-            cursor: pointer;
+        .sidebar nav a:hover { background: var(--dark-hover); }
+        .sidebar nav a.active { background: var(--dark-hover); border-left-color: var(--red); color: #fff; font-weight: 600; }
+        .sidebar .me { border-top: 1px solid #343b4c; padding-top: 18px; margin-top: 16px; }
+        .sidebar .me strong { display: block; font-size: 16px; }
+        .sidebar .me span { color: #aab2c3; font-size: 13px; }
+        .sidebar .me button {
+            width: 100%; margin-top: 14px; padding: 11px; background: transparent;
+            color: #fff; border: 1px solid #4a5265; border-radius: 6px;
+            font-family: inherit; font-size: 14px; cursor: pointer;
         }
-        .btn-keluar:hover { background: rgba(255,255,255,.08); }
+        .sidebar .me button:hover { background: var(--dark-hover); }
 
-        /* Konten */
-        .konten { padding: 36px 40px; max-width: 1100px; width: 100%; }
-        .konten h1 { font-size: 26px; font-weight: 600; margin: 0 0 4px; }
-        .konten .sub { color: var(--muted); margin: 0 0 28px; }
+        .main { margin-left: 260px; padding: 40px 48px; }
+        .main h2.page { margin: 0 0 6px; font-size: 28px; }
+        .main p.sub { margin: 0 0 24px; color: var(--muted); }
 
-        .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
-        .panel-judul { padding: 16px 20px; border-bottom: 1px solid var(--line); font-weight: 600; }
-        .panel-isi { padding: 20px; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 28px; }
+        .stat { background: #fff; border: 1px solid var(--border); border-radius: 10px; padding: 22px 24px; }
+        .stat .n { font-size: 36px; font-weight: 600; }
+        .stat .n.merah { color: var(--red); }
+        .stat .l { color: var(--muted); font-size: 15px; margin-top: 4px; }
 
-        .ringkasan { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-        .ringkasan .panel { padding: 18px 20px; }
-        .ringkasan .angka { font-size: 32px; font-weight: 600; line-height: 1.1; }
-        .ringkasan .label { color: var(--muted); font-size: 14px; margin-top: 4px; }
-        .ringkasan .perhatian .angka { color: var(--red); }
-
-        table { width: 100%; border-collapse: collapse; font-size: 15px; }
-        th, td { text-align: left; padding: 12px 20px; border-bottom: 1px solid var(--line); }
-        th { font-weight: 500; color: var(--muted); font-size: 14px; }
+        .panel { background: #fff; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .panel + .panel { margin-top: 20px; }
+        .panel h3 { margin: 0; padding: 20px 24px; font-size: 17px; border-bottom: 1px solid var(--border); }
+        .scroll { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 14px 24px; color: var(--muted); font-weight: 500; font-size: 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        td { padding: 14px 24px; border-bottom: 1px solid var(--border); font-size: 15px; vertical-align: top; }
         tr:last-child td { border-bottom: 0; }
-        .tabel-wrap { overflow-x: auto; }
+        .empty { padding: 28px 24px; color: var(--muted); }
 
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 500; }
-        .badge.ok   { background: var(--ok-bg);   color: var(--ok); }
-        .badge.warn { background: var(--warn-bg); color: var(--warn); }
-        .badge.bad  { background: var(--bad-bg);  color: var(--bad); }
+        .muted { color: var(--muted); font-size: 13px; }
+        .link { color: var(--red); text-decoration: none; font-weight: 500; }
+        .link:hover { text-decoration: underline; }
 
-        .tombol {
-            display: inline-block;
-            padding: 10px 18px;
-            background: var(--red);
-            color: #fff;
-            border-radius: 6px;
-            font-weight: 500;
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+        .b-wait { background: #fdf0d5; color: #92600a; }
+        .b-ok   { background: #e3f4ea; color: #1f7a45; }
+        .b-rev  { background: #fbe4e6; color: #b01f2a; }
+        .b-info { background: #e1ecfb; color: #1d4f91; }
+
+        .btn { display: inline-block; padding: 11px 18px; border: 0; border-radius: 6px; background: var(--red); color: #fff; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
+        .btn:hover { background: #8f1922; }
+        .btn-sm { padding: 7px 12px; font-size: 13px; }
+        .btn-dark { background: var(--dark); }
+        .btn-dark:hover { background: var(--dark-hover); }
+        .toolbar { margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+        .alert { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 14px; }
+        .alert.ok { background: #e3f4ea; color: #1f7a45; }
+        .alert.err { background: #fbe4e6; color: #9b1c1c; }
+        .alert.warn { background: #fdf0d5; color: #92600a; }
+        .alert ul { margin: 0; padding-left: 18px; }
+        .alert a { color: inherit; font-weight: 600; }
+
+        .info { padding: 20px 24px 24px; }
+        .info dl { display: grid; grid-template-columns: 190px 1fr; gap: 14px 12px; margin: 0; }
+        .info dt { color: var(--muted); }
+        .info dd { margin: 0; font-weight: 500; }
+        .info p { margin: 14px 0 0; }
+
+        .form { padding: 8px 24px 24px; }
+        .form label { display: block; margin: 16px 0 6px; font-weight: 600; font-size: 14px; }
+        .form input[type=text], .form input[type=number], .form input[type=datetime-local],
+        .form input[type=file], .form select, .form textarea {
+            width: 100%; padding: 11px 12px; border: 1px solid #d5deeb; border-radius: 6px;
+            background: #f7f9fc; font-family: inherit; font-size: 15px; color: var(--text);
         }
-        .tombol:hover { background: var(--red-dark); }
+        .form textarea { min-height: 90px; resize: vertical; }
+        .form .check { display: flex; gap: 10px; align-items: center; font-weight: 500; }
+        .form .check input { width: auto; }
+        .form .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+        .nilai-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0 16px; }
 
+        .fotos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding: 20px 24px 24px; }
+        .fotos img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+        .timeline { list-style: none; margin: 0; padding: 22px 24px 8px 30px; }
+        .timeline li { position: relative; padding: 0 0 18px 22px; border-left: 2px solid var(--border); }
+        .timeline li::before { content: ""; position: absolute; left: -7px; top: 2px; width: 12px; height: 12px; border-radius: 50%; background: #9aa6b8; }
+        .timeline li.t-disetujui::before { background: #1f7a45; }
+        .timeline li.t-revisi::before { background: var(--red); }
+        .timeline li.t-dikirim::before, .timeline li.t-dikirim_ulang::before { background: #c98a1b; }
+        .timeline li p { margin: 6px 0 0; font-size: 14px; }
+        .timeline li .muted { display: block; }
+
+        .topbar { display: none; }
         @media (max-width: 860px) {
-            .shell { grid-template-columns: 1fr; }
-            .sidebar { position: static; height: auto; padding: 18px; }
-            .menu { flex-direction: row; flex-wrap: wrap; margin-top: 16px; }
-            .menu .pemisah { display: none; }
-            .akun { margin-top: 16px; }
-            .konten { padding: 24px 18px; }
-            .ringkasan { grid-template-columns: 1fr; }
+            .topbar { display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 10; background: var(--dark); color: #fff; padding: 14px 18px; }
+            .topbar button { background: none; border: 0; color: #fff; font-size: 24px; cursor: pointer; }
+            .sidebar { transform: translateX(-100%); transition: transform .2s; }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 24px 18px; }
+            .stats { grid-template-columns: 1fr; }
+            .info dl { grid-template-columns: 1fr; gap: 4px; }
+            .info dd { margin-bottom: 10px; }
         }
     </style>
 </head>
 <body>
-<div class="shell">
-    <aside class="sidebar">
-        <div class="logo">SIGAP</div>
-        <div class="logo-sub">Bawaslu - Kinerja Harian</div>
+@php
+    $isAdmin = auth()->user()->isAdmin();
 
-        <nav class="menu">
-            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'aktif' : '' }}">Dashboard</a>
+    $menu = $isAdmin ? [
+        ['Dashboard',              route('dashboard'),                           request()->is('/')],
+        ['Semua Tugas',            route('admin.tugas'),                         request()->is('admin/tugas') || (request()->is('admin/tugas/*') && ! request()->is('admin/tugas/jabatan/*', 'admin/tugas/buat'))],
+        ['Tugas Satpam',           route('admin.tugas.jabatan', 'satpam'),       request()->is('admin/tugas/jabatan/satpam')],
+        ['Tugas Pramubakti (OB)',  route('admin.tugas.jabatan', 'pramubakti'),   request()->is('admin/tugas/jabatan/pramubakti')],
+        ['Buat Tugas',             route('admin.tugas.buat'),                    request()->is('admin/tugas/buat')],
+        ['Verifikasi & Penilaian', route('admin.verifikasi'),                    request()->is('admin/verifikasi', 'admin/laporan/*')],
+        ['Semua Akun',             route('admin.akun'),                          request()->is('admin/akun', 'admin/akun/*')],
+    ] : [
+        ['Dashboard',        route('dashboard'),       request()->is('/')],
+        ['Tugas Tersedia',   route('petugas.tugas'),   request()->is('tugas')],
+        ['Laporan Saya',     route('petugas.laporan'), request()->is('laporan', 'laporan/*')],
+        ['Pengaturan Akun',  route('akun.saya'),       request()->is('pengaturan')],
+    ];
+@endphp
 
-            @if ($isAdmin)
-                <a href="{{ route('admin.laporan.index') }}">Semua Laporan</a>
-                <a href="#">Data Tenaga Pendukung</a>
-                <a href="#">Verifikasi Laporan</a>
-                <a href="#">Evaluasi</a>
-                <a href="#">Kelola Akun</a>
-            @else
-                <a href="#">Upload Laporan Harian</a>
-                <a href="#">Laporan Saya</a>
-                <a href="#">Revisi dari Atasan</a>
-                <a href="#">Pengaturan Akun</a>
-            @endif
-        </nav>
-
-        <div class="akun">
-            <div class="akun-nama">{{ auth()->user()->name }}</div>
-            <div class="akun-peran">{{ $isAdmin ? 'Admin' : 'Tenaga Pendukung' }}</div>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit" class="btn-keluar">Keluar</button>
-            </form>
-        </div>
-    </aside>
-
-    <main class="konten">
-        @yield('content')
-    </main>
+<div class="topbar">
+    <button type="button" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+    <strong>SIGAP</strong>
 </div>
+
+<aside class="sidebar" id="sidebar">
+    <h1>SIGAP</h1>
+    <p class="tag">Bawaslu - Kinerja Harian</p>
+
+    <nav>
+        @foreach ($menu as [$label, $url, $aktif])
+            <a href="{{ $url }}" class="{{ $aktif ? 'active' : '' }}">{{ $label }}</a>
+        @endforeach
+    </nav>
+
+    <div class="me">
+        <strong>{{ auth()->user()->name }}</strong>
+        <span>{{ $isAdmin ? 'Admin' : auth()->user()->labelJabatan() }}</span>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit">Keluar</button>
+        </form>
+    </div>
+</aside>
+
+<main class="main">
+    @if (session('ok'))
+        <div class="alert ok">{{ session('ok') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="alert err">
+            <ul>
+                @foreach ($errors->all() as $e)
+                    <li>{{ $e }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    @yield('content')
+</main>
+
 </body>
 </html>

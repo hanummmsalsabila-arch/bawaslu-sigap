@@ -4,28 +4,28 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@sigap.test'],
-            [
-                'name'     => 'Admin SIGAP',
-                'password' => Hash::make('password123'),
-                'role'     => 'admin',
-            ]
-        );
+        $akun = [
+            // email, nama, role, jabatan
+            ['admin@sigap.test', 'Admin SIGAP',   'admin', null],
+            ['sasa@sigap.test',  'sasa',          'user',  'pramubakti'],
+            ['budi@sigap.test',  'Budi Santoso',  'user',  'satpam'],
+        ];
 
-        User::updateOrCreate(
-            ['email' => 'sasa@sigap.test'],
-            [
-                'name'     => 'sasa',
-                'password' => Hash::make('password123'),
-                'role'     => 'user',
-            ]
-        );
+        foreach ($akun as [$email, $nama, $role, $jabatan]) {
+            User::updateOrCreate(
+                ['email' => $email],
+                [
+                    'name'     => $nama,
+                    'password' => 'password123', // di-hash otomatis oleh cast model
+                    'role'     => $role,
+                    'jabatan'  => $jabatan,
+                ]
+            );
+        }
     }
 }
